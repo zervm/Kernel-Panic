@@ -1,0 +1,100 @@
+Table users {
+  id integer [pk, increment]
+  email text [not null, unique]
+  username text [not null, unique]
+  password_hash text [not null]
+  role text [not null, default: 'user', note: 'user | mod | admin']
+  created_at datetime [not null]
+  banned_at datetime [null]
+  deleted_at datetime [null]
+}
+
+Table posts {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  title text [not null]
+  body text [not null]
+  created_at datetime [not null]
+
+  indexes {
+    user_id
+  }
+}
+
+Table categories {
+  id integer [pk, increment]
+  name text [not null, unique]
+}
+
+Table post_categories {
+  post_id integer [not null]
+  category_id integer [not null]
+
+  indexes {
+    (post_id, category_id) [pk]
+    category_id 
+  }
+}
+
+Table post_likes {
+  user_id integer [not null]
+  post_id integer [not null]
+  value integer [not null, note: 'CHECK: -1 or 1, in the .sql migration']
+  created_at datetime [not null]
+
+  indexes {
+    (user_id, post_id) [pk]
+    post_id
+  }
+}
+
+Table sessions {
+  id text [pk]
+  user_id integer [unique, not null]
+  expires_at datetime [not null]
+}
+
+Table comments {
+  id integer [pk, increment]
+  post_id integer [not null]
+  user_id integer [not null]
+  body text [not null]
+  created_at datetime [not null]
+
+  indexes {
+    post_id
+  }
+}
+
+Table comment_likes {
+  user_id integer [not null]
+  comment_id integer [not null]
+  value integer [not null, note: 'CHECK: -1 or 1, in the .sql migration']
+
+  indexes {
+    (user_id, comment_id) [pk]
+    comment_id
+  }
+}
+
+Table messages {
+  id integer [pk, increment]
+  sender_id integer [not null, ref: > users.id]
+  recipient_id integer [not null, ref: > users.id]
+  body text [not null]
+  read_at datetime [null]
+  created_at datetime [not null]
+}
+
+
+Ref: post_likes.user_id > users.id [delete: cascade]
+Ref: comment_likes.user_id > users.id [delete: cascade]
+Ref: post_likes.post_id > posts.id [delete: cascade]
+Ref: comment_likes.comment_id > comments.id [delete: cascade]
+Ref: comments.post_id > posts.id [delete: cascade]
+Ref: comments.user_id > users.id 
+Ref: post_categories.post_id > posts.id [delete: cascade]
+Ref: post_categories.category_id > categories.id [delete: restrict]
+Ref: sessions.user_id - users.id [delete: cascade]
+
+
